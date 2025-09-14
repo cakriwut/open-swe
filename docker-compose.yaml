@@ -1,0 +1,52 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared
+    container_name: cloudflared
+    env_file:
+      - ./.env.cloudflared
+    # environment:
+    #   - TZ=Europe/Amsterdam # Change this to your timezone
+    #   - TUNNEL_TOKEN=${TOKEN}
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    networks:
+      - cloudflared
+  open-swe:
+    build:
+      context: .
+      dockerfile: apps/open-swe/Dockerfile
+    ports:
+      - "8000:2024"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      # Mount .env file for environment variables
+      - ./apps/open-swe/.env:/app/apps/open-swe/.env:ro
+    networks:
+      - openswe-network
+      - cloudflared
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "8001:3000"
+    environment:
+      - NODE_ENV=development
+    volumes:
+      # Mount .env file for environment variables
+      - ./apps/web/.env:/app/apps/web/.env:ro
+    networks:
+      - openswe-network
+      - cloudflared
+    depends_on:
+      - open-swe
+    restart: unless-stopped
+
+networks:
+  openswe-network:
+    driver: bridge
+  cloudflared:
+    name: cloudflared
