@@ -8,7 +8,7 @@ export function generateJWT(appId: string, privateKey: string): string {
 
   const payload = {
     iat: now,
-    exp: now + 10 * 60,
+    exp: now + (9 * 60), // 9 minutes
     iss: appId,
   };
 
