@@ -15,6 +15,13 @@ services:
     build:
       context: .
       dockerfile: apps/open-swe/Dockerfile
+    develop:
+      watch:
+        - path: apps/open-swe
+          action: rebuild
+        - path: packages/shared
+          target: apps/open-swe
+          action: sync
     ports:
       - "8000:2024"
     environment:
@@ -31,6 +38,13 @@ services:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
+    develop:
+      watch:
+        - path: apps/web
+          action: rebuild
+        - path: packages/shared
+          target: apps/web
+          action: sync
     ports:
       - "8001:3000"
     environment:

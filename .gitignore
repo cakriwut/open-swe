@@ -24,6 +24,9 @@
 # misc
 .DS_Store
 *.pem
+start-git-pull-cron.sh
+stop-git-pull-cron.sh
+git-pull.log
 
 # debug
 npm-debug.log*
