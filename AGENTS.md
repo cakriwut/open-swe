@@ -1,75 +1,21 @@
-<general_rules>
-- Always use Yarn as the package manager - never use npm or other package managers
-- Run all general commands (e.g. not for starting a server) from the repository root using Turbo orchestration (yarn build, yarn lint, yarn format)
-- Before creating new utilities or shared functions, search in packages/shared/src to see if one already exists
-- When importing from the shared package, use the @openswe/shared namespace with specific module paths
-- Follow strict TypeScript practices - the codebase uses strict mode across all packages
-- Use ESLint and Prettier for code quality - run yarn lint:fix and yarn format before committing
-- Console logging is prohibited in the open-swe app (ESLint error) - use the `createLogger` function to create a new logger instance instead
-- Build the shared package first before other packages can consume it (yarn build from the root handles this automatically via turbo repo)
-- Follow existing code patterns and maintain consistency with the established architecture
-- Include as few inline comments as possible
-</general_rules>
+# AGENTS.md
 
-<repository_structure>
-This is a Yarn workspace monorepo with Turbo build orchestration containing three main packages:
+This file provides guidance to agents when working with code in this repository.
 
-**apps/open-swe**: LangGraph agent application
-- Core LangChain/LangGraph agent implementation with TypeScript
-- Contains three graphs: programmer, planner, and manager (configured in langgraph.json)
-- Uses strict ESLint rules including no-console errors
+## General Rules & Conventions
 
-**apps/web**: Next.js 15 web interface
-- React 19 frontend with Shadcn UI components (wrapped Radix UI) and Tailwind CSS
-- Modern web stack with TypeScript, ESLint, and Prettier with Tailwind plugin
-- Serves as the user interface for the LangGraph agent
-
-**packages/shared**: Common utilities package
-- Central workspace dependency providing shared types, constants, and utilities
-- Exports modules via @openswe/shared namespace (e.g., @openswe/shared/open-swe/types)
-- Must be built before other packages can import from it
-- Contains crypto utilities, GraphState types, and open-swe specific modules
-
-**Root Configuration**:
-- turbo.json: Build orchestration with task dependencies and parallel execution
-- .yarnrc.yml: Yarn 3.5.1 configuration with node-modules linker
-- tsconfig.json: Base TypeScript configuration extended by all packages
-</repository_structure>
-
-<dependencies_and_installation>
-**Package Manager**: Use Yarn exclusively (configured in .yarnrc.yml)
-
-**Installation Process**:
-- Run `yarn install` from the repository root - this handles all workspace dependencies automatically
-
-**Key Dependencies**:
-- LangChain ecosystem: @langchain/langgraph, @langchain/anthropic for agent functionality
-- Next.js 15 with React 19 for web interface
-- Shadcn UI (wrapped Radix UI) and Tailwind CSS for component library and styling
-- TypeScript with strict mode across all packages
-- Jest with ts-jest for testing framework
-
-**Workspace Structure**: Dependencies are managed on a per-package basis, meaning dependencies should only be installed in their specific app/package. Individual packages reference the shared package via @openswe/shared workspace dependency.
-</dependencies_and_installation>
-
-<testing_instructions>
-**Testing Framework**: Jest with TypeScript support via ts-jest preset and ESM module handling
-
-**Test Types**:
-- Unit tests: *.test.ts files (e.g., take-action.test.ts in __tests__ directories)
-- Integration tests: *.int.test.ts files (e.g., sandbox.int.test.ts)
-
-**Running Tests**:
-- `yarn test` - Run unit tests across all packages
-- `yarn test:int` - Run integration tests (apps/open-swe only)
-- `yarn test:single <file>` - Run a specific test file
-
-**Test Configuration**:
-- 20-second timeout for longer-running tests
-- Environment variables loaded via dotenv integration
-- ESM module support with .js extension mapping
-- Pass-with-no-tests setting for CI/CD compatibility
-
-**Writing Tests**: Focus on testing core business logic, utilities, and agent functionality. Integration tests should verify end-to-end workflows. Use the existing test patterns and maintain consistency with the established testing structure.
-</testing_instructions>
-
+- **Package Manager**: Use Yarn 3.5.1 with node-modules linker.
+- **Turbo Orchestration**: All general commands (build, lint, format, test, dev, clean, format:check, lint:fix) are run from the repository root using Turbo.
+- **Shared Package Imports**: Import modules from `packages/shared` using the `@openswe/shared` namespace with specific module paths (e.g., `@openswe/shared/open-swe/types`). The `packages/shared/src/index.ts` is a no-op, so direct imports from sub-modules are the convention.
+- **Shared Package Build Order**: `packages/shared` must be built before other packages can consume it (handled automatically by `yarn build`).
+- **Environment Variables**: Loaded from `**/.env` files (configured in `turbo.json` globalDependencies).
+- **Console Logging**: Prohibited in `apps/open-swe` (ESLint error); use the `createLogger` function instead.
+- **TypeScript Strictness Deviations**: `tsconfig.json` sets `strictPropertyInitialization: false` and `strictFunctionTypes: false`.
+- **ESLint `any` type**: `@typescript-eslint/no-explicit-any` is disabled (set to `0`) in `apps/web/eslint.config.js`.
+- **Prettier Formatting**: `singleAttributePerLine: true` and `prettier-plugin-tailwindcss` are used in `apps/web/prettier.config.js`.
+- **GitHub Authentication**: Custom flow using `GITHUB_TOKEN_COOKIE`, `GITHUB_INSTALLATION_ID_COOKIE`, `verifyGithubUser` from `@openswe/shared/github/verify-user`, and custom `x-github-*` headers. `getInstallationToken` in `packages/shared/src/github/auth.ts` handles JWT generation and GitHub API calls.
+- **MCP Server Configuration**: `packages/shared/src/open-swe/mcp.ts` defines Zod schemas for `McpServerConfig` (stdio and streamable HTTP) and `oAuthClientProviderSchema` with specific required properties for OAuth client providers.
+- **Graph Configuration UI**: `packages/shared/src/open-swe/utils/config.ts` filters configurable fields based on `x_open_swe_ui_config.type !== "hidden"` or specific keys ("apiKeys", "reviewPullNumber", "customFramework").
+- **Next.js Server Actions**: `apps/web/next.config.mjs` sets an experimental `serverActions` body size limit of "10mb".
+- **Web App Middleware**: `apps/web/src/middleware.ts` handles authentication and redirects based on GitHub user status.
+- **Caching Cost Calculation**: `packages/shared/src/caching.ts` contains custom cost-saving calculations and a `tokenDataReducer`.
